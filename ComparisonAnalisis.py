@@ -229,7 +229,13 @@ from scipy.stats import linregress
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-Ravalues = np.array([1.65e3, 2e3, 7e3, 1e4, 5e4, 1e5, 5e5,1e7])
+def powerfit(x, y, xnew):
+    """line fitting on log-log scale"""
+    k, m = np.polyfit(np.log(x), np.log(y), 1)
+    print('Nu = exp(',m,') * Ra^',k)
+    return np.exp(m) * xnew**(k)
+
+Ravalues = np.array([1.65e3, 2e3, 7e3, 1e4, 5e4, 1e5, 5e5,1e7, 1e8, 1e9])
 #Ravalues = np.array([1.0e5, 1.0e5])
 avgRe_values = np.zeros_like(Ravalues)
 avgNu_values = np.zeros_like(Ravalues)
@@ -259,15 +265,26 @@ for casenum in range(num_cases):
     avgNu_values[casenum] = Nu_average
     print("average Reynolds number for case with Ra ", Ravalues[casenum], " is ", Re_average)
     print("average Nusselt number for case with Ra ", Ravalues[casenum], " is ", Nu_average)
+
+popt, pcov = curve_fit(straightLine, np.log(Ravalues[2:]), np.log(avgNu_values[2:]))
+
+x = np.linspace(1e3,1e9)
+
+y = powerfit(Ravalues[2:], avgNu_values[2:], x)
+
+
+
 fig, ax=plt.subplots()
+ax.plot(x,y)
 ax.plot(Ravalues, avgNu_values, 'o')
 ax.set_xscale('log')
-ax.set_ylim(0.0, 10.0)
+ax.set_yscale('log')
+#ax.set_ylim(0.0, 10.0)
 ax.set_xlabel(r'$Ra$')
 ax.set_ylabel(r'$Nu$')
 
-print('Nu =',m_opt,'log(Ra) + ',c_opt)
 
 if (savefigs):
     figname='nusselt_rayleigh_example.png'
     plt.savefig(figname)
+    
